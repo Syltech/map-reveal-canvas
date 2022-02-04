@@ -1,5 +1,6 @@
 const mainCanvas = document.getElementById("mapContainer");
 const maskCanvas = document.createElement("canvas");
+const exportCanvas = document.createElement("canvas");
 
 const maskSave = document.getElementById("maskSave");
 
@@ -20,6 +21,7 @@ mapImage.onload = () => {
 
 const mainContext = mainCanvas.getContext("2d");
 const maskContext = maskCanvas.getContext("2d");
+const exportContext = exportCanvas.getContext("2d");
 let width = 512;
 let height = 512;
 const BRUSH_RADIUS = 50;
@@ -75,10 +77,28 @@ mainCanvas.addEventListener("mousemove", (event) => {
 
 const buttonPostMask = document.getElementById("postMask");
 buttonPostMask.addEventListener("click", (event) => {
-  const formData = new FormData();
-  formData.append("file", maskCanvas.toDataURL("img/png"));
+  const maskFormData = new FormData();
+  maskFormData.append("file", maskCanvas.toDataURL("img/png"));
   fetch("/mask", {
     method: "POST",
-    body: formData,
+    body: maskFormData,
+  });
+  initExportCanvas();
+  const exportFormData = new FormData();
+  exportFormData.append("file", exportCanvas.toDataURL("img/png"));
+  fetch("/export", {
+    method: "POST",
+    body: exportFormData,
   });
 });
+
+function initExportCanvas() {
+  exportCanvas.width = width;
+  exportCanvas.height = height;
+  exportContext.save();
+  exportContext.drawImage(mapImage, 0, 0);
+  exportContext.globalCompositeOperation = "multiply";
+  exportContext.globalAlpha = 1;
+  exportContext.drawImage(maskCanvas, 0, 0);
+  exportContext.restore();
+}

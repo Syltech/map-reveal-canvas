@@ -15,6 +15,16 @@ app.post("/mask", (req, res) => {
   res.send("ok");
 });
 
+app.post("/export", (req, res) => {
+  const imgdata = req.body.file;
+  const base64Data = imgdata.replace(/^data:([A-Za-z-+/]+);base64,/, "");
+  fs.writeFileSync("./public/img/export.png", base64Data, {
+    encoding: "base64",
+  });
+
+  res.send("ok");
+});
+
 app.listen(3000, () => {
   console.log("Started on PORT 3000");
 });
