@@ -7,7 +7,6 @@ const exportContext = exportCanvas.getContext("2d");
 let width = 512;
 let height = 512;
 const BRUSH_RADIUS = 5;
-let brushRadiusMultiplier = 1;
 
 const mapImage = new Image();
 mapImage.src = "./img/map.jpg";
