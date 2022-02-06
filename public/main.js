@@ -55,16 +55,26 @@ function render() {
   mainContext.beginPath();
   mainContext.strokeStyle = "red";
   mainContext.lineWidth = 3;
-  mainContext.arc(
-    cursorPos.x,
-    cursorPos.y,
-    BRUSH_RADIUS * brushRadiusMultiplier,
-    0,
-    2 * Math.PI
-  );
-  mainContext.stroke();
-  mainContext.closePath();
-  mainContext.restore();
+  if (brushType === "circle") {
+    mainContext.arc(
+      cursorPos.x,
+      cursorPos.y,
+      BRUSH_RADIUS * brushRadiusMultiplier,
+      0,
+      2 * Math.PI
+    );
+  }
+  if (brushType === "rect") {
+    mainContext.rect(
+      cursorPos.x - (BRUSH_RADIUS * brushRadiusMultiplier) / 2,
+      cursorPos.y - (BRUSH_RADIUS * brushRadiusMultiplier) / 2,
+      BRUSH_RADIUS * brushRadiusMultiplier,
+      BRUSH_RADIUS * brushRadiusMultiplier
+    );
+    mainContext.stroke();
+    mainContext.closePath();
+    mainContext.restore();
+  }
 }
 
 /**
@@ -72,6 +82,11 @@ function render() {
  */
 let mousePressed = false;
 let brushRadiusMultiplier = 5;
+let brushType = "circle";
+
+document.getElementById("brushStyle").addEventListener("change", (event) => {
+  brushType = event.target.value;
+});
 
 mainCanvas.addEventListener("mousedown", (event) => {
   mousePressed = true;
@@ -101,17 +116,26 @@ mainCanvas.addEventListener("mousemove", (event) => {
   if (mousePressed) {
     maskContext.beginPath();
     maskContext.fillStyle = event.shiftKey ? "black" : "white";
-    maskContext.arc(
-      cursorPos.x,
-      cursorPos.y,
-      BRUSH_RADIUS * brushRadiusMultiplier,
-      0,
-      2 * Math.PI
-    );
+    if (brushType === "circle") {
+      maskContext.arc(
+        cursorPos.x,
+        cursorPos.y,
+        BRUSH_RADIUS * brushRadiusMultiplier,
+        0,
+        2 * Math.PI
+      );
+    }
+    if (brushType === "rect") {
+      maskContext.rect(
+        cursorPos.x - (BRUSH_RADIUS * brushRadiusMultiplier) / 2,
+        cursorPos.y - (BRUSH_RADIUS * brushRadiusMultiplier) / 2,
+        BRUSH_RADIUS * brushRadiusMultiplier,
+        BRUSH_RADIUS * brushRadiusMultiplier
+      );
+    }
     maskContext.fill();
     maskContext.closePath();
   }
-
   render();
 });
 
