@@ -1,8 +1,13 @@
 const mainCanvas = document.getElementById("mapContainer");
 const maskCanvas = document.createElement("canvas");
-const exportCanvas = document.createElement("canvas");
-
-const maskSave = document.getElementById("maskSave");
+const exportCanvas = document.getElementById("exportContainer");
+const mainContext = mainCanvas.getContext("2d");
+const maskContext = maskCanvas.getContext("2d");
+const exportContext = exportCanvas.getContext("2d");
+let width = 512;
+let height = 512;
+const BRUSH_RADIUS = 5;
+let brushRadiusMultiplier = 1;
 
 const mapImage = new Image();
 mapImage.src = "./img/map.jpg";
@@ -13,18 +18,11 @@ mapImage.onload = () => {
   maskImage.onerror = () => {};
 
   maskImage.onload = () => {
-    console.log("masque chargé");
     initMaskCanvas(maskImage);
     render();
+    initExportCanvas();
   };
 };
-
-const mainContext = mainCanvas.getContext("2d");
-const maskContext = maskCanvas.getContext("2d");
-const exportContext = exportCanvas.getContext("2d");
-let width = 512;
-let height = 512;
-const BRUSH_RADIUS = 50;
 
 function initCanvas(mapImage) {
   width = mapImage.width;
@@ -101,4 +99,79 @@ function initExportCanvas() {
   exportContext.globalAlpha = 1;
   exportContext.drawImage(maskCanvas, 0, 0);
   exportContext.restore();
+  renderTokens();
+}
+
+/**
+ * TOKENS
+ */
+const TOKEN_RADIUS = 30;
+const fontSize = TOKEN_RADIUS * 2.0;
+const fontFamily = "Roboto";
+
+const tokensData = [
+  { x: 40, y: 40, color: "red", label: "C" },
+  { x: 50, y: 40, color: "blue", label: "S" },
+];
+let currentTokenId = -1;
+let mouseOffset = {
+  x: 0,
+  y: 0,
+};
+
+function renderTokens() {
+  exportContext.save();
+  for (let token of tokensData) {
+    // Draw circle
+    exportContext.beginPath();
+    exportContext.fillStyle = token.color;
+    exportContext.arc(token.x, token.y, TOKEN_RADIUS, 0, 2 * Math.PI);
+    exportContext.fill();
+    exportContext.closePath();
+
+    // Draw label
+    exportContext.fillStyle = "white";
+    exportContext.font = `${fontSize}px ${fontFamily}`;
+    exportContext.textBaseline = "middle";
+    exportContext.textAlign = "center";
+    exportContext.fillText(token.label, token.x, token.y + TOKEN_RADIUS * 0.15);
+  }
+
+  exportContext.restore();
+}
+
+exportCanvas.addEventListener("mousedown", (event) => {
+  currentTokenId = getClickedTokenId(event.offsetX, event.offsetY);
+  if (currentTokenId === -1) return;
+  const currentToken = tokensData.splice(currentTokenId, 1)[0];
+  tokensData.push(currentToken);
+  mouseOffset.x = tokensData[tokensData.length - 1].x - event.offsetX;
+  mouseOffset.y = tokensData[tokensData.length - 1].y - event.offsetY;
+  renderTokens();
+});
+
+window.addEventListener("mouseup", () => {
+  if (currentTokenId < 0) return;
+  currentTokenId = -1;
+});
+
+exportCanvas.addEventListener("mousemove", (event) => {
+  if (currentTokenId === -1) return;
+
+  tokensData[tokensData.length - 1].x = event.offsetX + mouseOffset.x;
+  tokensData[tokensData.length - 1].y = event.offsetY + mouseOffset.y;
+  initExportCanvas();
+  renderTokens();
+});
+
+function getClickedTokenId(x, y) {
+  for (let i = tokensData.length - 1; i >= 0; i--) {
+    const token = tokensData[i];
+    if (distance(x, y, token.x, token.y) <= TOKEN_RADIUS) return i;
+  }
+  return -1;
+}
+
+function distance(x1, y1, x2, y2) {
+  return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 }
