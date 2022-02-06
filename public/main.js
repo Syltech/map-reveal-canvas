@@ -20,6 +20,7 @@ mapImage.onload = () => {
   maskImage.onload = () => {
     initMaskCanvas(maskImage);
     render();
+    renderBrush();
     initExportCanvas();
   };
 };
@@ -36,6 +37,7 @@ function initCanvas(mapImage) {
   maskContext.fillRect(0, 0, width, height);
 
   render();
+  renderBrush();
 }
 
 function initMaskCanvas(maskImage) {
@@ -51,30 +53,6 @@ function render() {
   mainContext.globalAlpha = 0.5;
   mainContext.drawImage(maskCanvas, 0, 0);
   mainContext.restore();
-  mainContext.save();
-  mainContext.beginPath();
-  mainContext.strokeStyle = "red";
-  mainContext.lineWidth = 3;
-  if (brushType === "circle") {
-    mainContext.arc(
-      cursorPos.x,
-      cursorPos.y,
-      BRUSH_RADIUS * brushRadiusMultiplier,
-      0,
-      2 * Math.PI
-    );
-  }
-  if (brushType === "rect") {
-    mainContext.rect(
-      cursorPos.x - (BRUSH_RADIUS * brushRadiusMultiplier) / 2,
-      cursorPos.y - (BRUSH_RADIUS * brushRadiusMultiplier) / 2,
-      BRUSH_RADIUS * brushRadiusMultiplier,
-      BRUSH_RADIUS * brushRadiusMultiplier
-    );
-    mainContext.stroke();
-    mainContext.closePath();
-    mainContext.restore();
-  }
 }
 
 /**
@@ -98,6 +76,7 @@ window.addEventListener("mouseup", (event) => {
 
 mainCanvas.addEventListener("wheel", (event) => {
   render();
+  renderBrush();
   if (!event.shiftKey) {
     return;
   }
@@ -137,8 +116,39 @@ mainCanvas.addEventListener("mousemove", (event) => {
     maskContext.closePath();
   }
   render();
+  renderBrush();
 });
 
+mainCanvas.addEventListener("mouseout", (event) => {
+  render();
+});
+
+function renderBrush() {
+  mainContext.save();
+  mainContext.beginPath();
+  mainContext.strokeStyle = "red";
+  mainContext.lineWidth = 3;
+  if (brushType === "circle") {
+    mainContext.arc(
+      cursorPos.x,
+      cursorPos.y,
+      BRUSH_RADIUS * brushRadiusMultiplier,
+      0,
+      2 * Math.PI
+    );
+  }
+  if (brushType === "rect") {
+    mainContext.rect(
+      cursorPos.x - (BRUSH_RADIUS * brushRadiusMultiplier) / 2,
+      cursorPos.y - (BRUSH_RADIUS * brushRadiusMultiplier) / 2,
+      BRUSH_RADIUS * brushRadiusMultiplier,
+      BRUSH_RADIUS * brushRadiusMultiplier
+    );
+  }
+  mainContext.stroke();
+  mainContext.closePath();
+  mainContext.restore();
+}
 /**
  * Exporting canvas
  */
