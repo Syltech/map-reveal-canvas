@@ -7,6 +7,7 @@ const exportContext = exportCanvas.getContext("2d");
 let width = 512;
 let height = 512;
 const BRUSH_RADIUS = 5;
+let cursorPos = { x: 0, y: 0 };
 
 const mapImage = new Image();
 mapImage.src = "./img/map.jpg";
@@ -50,9 +51,27 @@ function render() {
   mainContext.globalAlpha = 0.5;
   mainContext.drawImage(maskCanvas, 0, 0);
   mainContext.restore();
+  mainContext.save();
+  mainContext.beginPath();
+  mainContext.strokeStyle = "red";
+  mainContext.lineWidth = 3;
+  mainContext.arc(
+    cursorPos.x,
+    cursorPos.y,
+    BRUSH_RADIUS * brushRadiusMultiplier,
+    0,
+    2 * Math.PI
+  );
+  mainContext.stroke();
+  mainContext.closePath();
+  mainContext.restore();
 }
 
+/**
+ * Mask painting
+ */
 let mousePressed = false;
+let brushRadiusMultiplier = 5;
 
 mainCanvas.addEventListener("mousedown", (event) => {
   mousePressed = true;
@@ -62,16 +81,43 @@ window.addEventListener("mouseup", (event) => {
   mousePressed = false;
 });
 
+mainCanvas.addEventListener("wheel", (event) => {
+  render();
+  if (!event.shiftKey) {
+    return;
+  }
+
+  brushRadiusMultiplier -= event.deltaY / 150;
+  if (brushRadiusMultiplier < 1) {
+    brushRadiusMultiplier = 1;
+  }
+  if (brushRadiusMultiplier > 20) {
+    brushRadiusMultiplier = 20;
+  }
+});
+
 mainCanvas.addEventListener("mousemove", (event) => {
-  if (!mousePressed) return;
-  maskContext.beginPath();
-  maskContext.fillStyle = event.shiftKey ? "black" : "white";
-  maskContext.arc(event.offsetX, event.offsetY, BRUSH_RADIUS, 0, 2 * Math.PI);
-  maskContext.fill();
-  maskContext.closePath();
+  cursorPos = { x: event.offsetX, y: event.offsetY };
+  if (mousePressed) {
+    maskContext.beginPath();
+    maskContext.fillStyle = event.shiftKey ? "black" : "white";
+    maskContext.arc(
+      cursorPos.x,
+      cursorPos.y,
+      BRUSH_RADIUS * brushRadiusMultiplier,
+      0,
+      2 * Math.PI
+    );
+    maskContext.fill();
+    maskContext.closePath();
+  }
+
   render();
 });
 
+/**
+ * Exporting canvas
+ */
 const buttonPostMask = document.getElementById("postMask");
 buttonPostMask.addEventListener("click", (event) => {
   const maskFormData = new FormData();
